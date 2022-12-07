@@ -1,30 +1,35 @@
 from flask import Flask, jsonify, request
+from flask_restful import Resource, Api
 
 # creating a Flask app
 app = Flask(__name__)
+# creating an API object
+api = Api(app)
 
 
-# on the terminal type: curl http://127.0.0.1:5000/
 # returns hello world when we use GET.
 # returns the data that we send when we use POST.
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    if request.method == 'GET':
-        data = "hello world"
-        return jsonify({'data': data})
-    else:
-        return request.data
+class Hello(Resource):
+
+    def get(self):
+        return jsonify({'message': 'Hello'})
+
+    def post(self):
+        data = request.get_json()
+        return jsonify({'data': data}), 201
 
 
 # A simple function to calculate the square of a number
-# the number to be squared is sent in the URL when we use GET
-# on the terminal type: curl http://127.0.0.1:5000 / home / 10
-# this returns 100 (square of 10)
-@app.route('/home/<int:num>', methods=['GET'])
-def disp(num):
-    return jsonify({'data': num ** 2})
+class Square(Resource):
+
+    def get(self, num):
+        return jsonify({'square': num ** 2})
 
 
-# driver function
+# URL route handlers
+api.add_resource(Hello, '/')
+api.add_resource(Square, '/square/<int:num>')
+
+
 if __name__ == '__main__':
     app.run(debug=True)
