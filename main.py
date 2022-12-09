@@ -7,7 +7,6 @@ from flask_mysqldb import MySQL
 from flask_restful import Resource, Api, reqparse
 import pandas as pd
 
-
 # creating a Flask app
 app = Flask(__name__)
 # creating an API object
@@ -20,32 +19,32 @@ app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_DB'] = 'todosdb'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
-conn = None
-cur = None
+connection = None
+cursor = None
 try:
-    conn = MySQLdb.connect(host="localhost", # your host, usually localhost
-                         user="root", # your username
-                          passwd="toor", # your password
-                          db="")
-    cur = conn.cursor()
+    connection = MySQLdb.connect(host="localhost",  # your host, usually localhost
+                                 user="root",  # your username
+                                 passwd="toor",  # your password
+                                 db="")
+    cursor = connection.cursor()
     try:
-        cur.execute('CREATE DATABASE IF NOT EXISTS py_tasks')
-        cur.execute('USE py_tasks')
-        cur.execute('DROP TABLE IF EXISTS tasklist')
-        cur.execute('''CREATE TABLE tasklist (
+        cursor.execute('CREATE DATABASE IF NOT EXISTS py_tasks')
+        cursor.execute('USE py_tasks')
+        cursor.execute('DROP TABLE IF EXISTS tasklist')
+        cursor.execute('''CREATE TABLE tasklist (
                     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     title VARCHAR(100) NOT NULL,
                     completed BOOLEAN NOT NULL DEFAULT 0)''')
-        cur.execute('''INSERT INTO tasklist (title) VALUES ('Test')''')
-        conn.commit()
+        cursor.execute('''INSERT INTO tasklist (title) VALUES ('Test')''')
+        connection.commit()
     except MySQLdb.Error as err:
         print(f"Error: '{err}'")
 
 except MySQLdb.Error as err:
     print(f"Error: '{err}'")
 finally:
-    cur.close()
-    conn.close()
+    cursor.close()
+    connection.close()
 
 
 # returns hello world when we use GET.
@@ -65,18 +64,6 @@ class Square(Resource):
 
     def get(self, num):
         return jsonify({'square': num ** 2})
-
-
-class LoginDb(Resource):
-    def get(self):
-        try:
-            cursor = mysql.connection.cursor()
-            print("Connected to database")
-            return jsonify({'message': 'Initialised Database Successfully'})
-        # If connection is not successful
-        except (MySQLdb.Error, MySQLdb.Warning) as e:
-            print(e)
-            return jsonify({'message': 'Database Initialisation Failed'})
 
 
 class Login(Resource):
@@ -117,17 +104,22 @@ class CreateTask(Resource):
             return {'error': str(e)}
 
 
-def set_table(cur):
-    try:
-        cur.execute('DROP TABLE IF EXISTS tasklist')
-        cur.execute('''CREATE TABLE tasklist (
-                    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                    title VARCHAR(100) NOT NULL,
-                    completed BOOLEAN NOT NULL DEFAULT 0)''')
-        cur.execute('''INSERT INTO tasklist (title) VALUES ('Test')''')
-    except:
-        print(f"Error: set_table error")
-        return 0
+class AllTasks(Resource):
+
+    def get(self):
+        print("Getting all tasks")
+
+    def post(self):
+        print("Adding new task")
+
+
+class TaskDetail(Resource):
+
+    def get(self):
+        print("Getting details for single Task")
+
+    def post(self):
+        print("Updating details for Task")
 
 
 # def execute_sql(cur, sql):
@@ -137,13 +129,28 @@ def set_table(cur):
 #         print(f"Error: '{err}'")
 #         return 0
 
+def flask_conn():
+    connection = None
+    try:
+        connection = MySQLdb.connect(host="localhost",  # your host, usually localhost
+                                     user="root",  # your username
+                                     passwd="toor",  # your password
+                                     db="database")
+        connection.autocommit = True
+        cursor = connection.cursor()
+    except MySQLdb.Error as err:
+        print(f"Error: '{err}'")
+    finally:
+        return connection
+
 
 # URL route handlers
-api.add_resource(LoginDb, '/logindb')
 api.add_resource(Hello, '/home')
 api.add_resource(Square, '/square/<int:num>')
 api.add_resource(Login, '/login')
 api.add_resource(CreateTask, '/createtask')
+api.add_resource(AllTasks, '/alltasks')
+api.add_resource(Task, '/task')
 
 
 def main():
