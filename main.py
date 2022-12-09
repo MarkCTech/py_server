@@ -16,9 +16,11 @@ api = Api(app)
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'toor'
 app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_DB'] = 'todosdb'
+app.config['MYSQL_DB'] = 'py_tasks'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
+
+# sql conn with no named database, to allow creating of named database before route setting
 connection = None
 cursor = None
 try:
@@ -37,13 +39,14 @@ try:
                     completed BOOLEAN NOT NULL DEFAULT 0)''')
         cursor.execute('''INSERT INTO tasklist (title) VALUES ('Test')''')
         connection.commit()
+        cursor.close()
+
     except MySQLdb.Error as err:
         print(f"Error: '{err}'")
 
 except MySQLdb.Error as err:
     print(f"Error: '{err}'")
 finally:
-    cursor.close()
     connection.close()
 
 
@@ -98,6 +101,16 @@ class CreateTask(Resource):
             _taskTitle = args['title']
             _taskStatus = args['status']
 
+            if _taskStatus:
+                _taskStatus = 1
+            else:
+                _taskStatus = 0
+
+            cur = mysql.connection.cursor()
+            cur.execute('''INSERT INTO tasklist (title, completed) VALUES (%s, %s)''', (_taskTitle, str(_taskStatus)))
+            mysql.connection.commit()
+            cur.close()
+
             return {'Title': args['title'], 'Status': args['status']}
 
         except Exception as e:
@@ -129,20 +142,6 @@ class TaskDetail(Resource):
 #         print(f"Error: '{err}'")
 #         return 0
 
-def flask_conn():
-    connection = None
-    try:
-        connection = MySQLdb.connect(host="localhost",  # your host, usually localhost
-                                     user="root",  # your username
-                                     passwd="toor",  # your password
-                                     db="database")
-        connection.autocommit = True
-        cursor = connection.cursor()
-    except MySQLdb.Error as err:
-        print(f"Error: '{err}'")
-    finally:
-        return connection
-
 
 # URL route handlers
 api.add_resource(Hello, '/home')
@@ -150,7 +149,7 @@ api.add_resource(Square, '/square/<int:num>')
 api.add_resource(Login, '/login')
 api.add_resource(CreateTask, '/createtask')
 api.add_resource(AllTasks, '/alltasks')
-api.add_resource(Task, '/task')
+api.add_resource(TaskDetail, '/task')
 
 
 def main():
