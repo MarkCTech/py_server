@@ -26,9 +26,11 @@ try:
     conn = MySQLdb.connect(host="localhost", # your host, usually localhost
                          user="root", # your username
                           passwd="toor", # your password
-                          db="todosdb")
+                          db="")
     cur = conn.cursor()
     try:
+        cur.execute('CREATE DATABASE IF NOT EXISTS py_tasks')
+        cur.execute('USE py_tasks')
         cur.execute('DROP TABLE IF EXISTS tasklist')
         cur.execute('''CREATE TABLE tasklist (
                     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
