@@ -1,8 +1,7 @@
-# import MySQLdb
-# from MySQLdb import Error
-# import mysql.connector as mysql
+import MySQLdb
+from MySQLdb import Error
 import MySQLdb.cursors
-from pathlib import Path
+
 from flask import Flask, jsonify, request
 from flask_mysqldb import MySQL
 from flask_restful import Resource, Api, reqparse
@@ -21,6 +20,30 @@ app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_DB'] = 'todosdb'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
+conn = None
+cur = None
+try:
+    conn = MySQLdb.connect(host="localhost", # your host, usually localhost
+                         user="root", # your username
+                          passwd="toor", # your password
+                          db="todosdb")
+    cur = conn.cursor()
+    try:
+        cur.execute('DROP TABLE IF EXISTS tasklist')
+        cur.execute('''CREATE TABLE tasklist (
+                    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    title VARCHAR(100) NOT NULL,
+                    completed BOOLEAN NOT NULL DEFAULT 0)''')
+        cur.execute('''INSERT INTO tasklist (title) VALUES ('Test')''')
+        conn.commit()
+    except MySQLdb.Error as err:
+        print(f"Error: '{err}'")
+
+except MySQLdb.Error as err:
+    print(f"Error: '{err}'")
+finally:
+    cur.close()
+    conn.close()
 
 
 # returns hello world when we use GET.
