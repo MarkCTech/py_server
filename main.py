@@ -2,7 +2,7 @@ import MySQLdb
 from MySQLdb import Error
 import MySQLdb.cursors
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, redirect, url_for
 from flask_mysqldb import MySQL
 from flask_restful import Resource, Api, reqparse
 import pandas as pd
@@ -110,8 +110,8 @@ class CreateTask(Resource):
             cur.execute('''INSERT INTO tasklist (title, completed) VALUES (%s, %s)''', (_taskTitle, str(_taskStatus)))
             mysql.connection.commit()
             cur.close()
-
-            return {'Title': args['title'], 'Status': args['status']}
+            return redirect(url_for('alltasks'))
+            # return {'Title': args['title'], 'Status': args['status']}
 
         except Exception as e:
             return {'error': str(e)}
@@ -121,6 +121,16 @@ class AllTasks(Resource):
 
     def get(self):
         print("Getting all tasks")
+        try:
+            cur = mysql.connection.cursor()
+            cur.execute('''SELECT * FROM tasklist WHERE id IS NOT NULL''')
+            all_tasks = cur.fetchall()
+            if all_tasks:
+                for task in all_tasks:
+                    print(task)
+        except Exception as e:
+            return {'error': str(e)}
+
 
     def post(self):
         print("Adding new task")
