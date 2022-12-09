@@ -126,11 +126,9 @@ class AllTasks(Resource):
             cur.execute('''SELECT * FROM tasklist WHERE id IS NOT NULL''')
             all_tasks = cur.fetchall()
             if all_tasks:
-                for task in all_tasks:
-                    print(task)
+                return jsonify(all_tasks)
         except Exception as e:
             return {'error': str(e)}
-
 
     def post(self):
         print("Adding new task")
