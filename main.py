@@ -87,10 +87,21 @@ class Login(Resource):
             return {'error': str(e)}
 
 
-# Parse request for json, to create a task
-class CreateTask(Resource):
+class AllTasks(Resource):
+
+    def get(self):
+        print("Getting all tasks")
+        try:
+            cur = mysql.connection.cursor()
+            cur.execute('''SELECT * FROM tasklist WHERE id IS NOT NULL''')
+            all_tasks = cur.fetchall()
+            if all_tasks:
+                return jsonify(all_tasks)
+        except Exception as e:
+            return {'error': str(e)}
 
     def post(self):
+        # Parse request for json, to create a task
         try:
             # Parse the arguments
             parser = reqparse.RequestParser()
@@ -107,7 +118,8 @@ class CreateTask(Resource):
                 _taskStatus = 0
 
             cur = mysql.connection.cursor()
-            cur.execute('''INSERT INTO tasklist (title, completed) VALUES (%s, %s)''', (_taskTitle, str(_taskStatus)))
+            cur.execute('''INSERT INTO tasklist (title, completed) VALUES (%s, %s)''',
+                        (_taskTitle, str(_taskStatus)))
             mysql.connection.commit()
             cur.close()
             return redirect(url_for('alltasks'))
@@ -115,23 +127,6 @@ class CreateTask(Resource):
 
         except Exception as e:
             return {'error': str(e)}
-
-
-class AllTasks(Resource):
-
-    def get(self):
-        print("Getting all tasks")
-        try:
-            cur = mysql.connection.cursor()
-            cur.execute('''SELECT * FROM tasklist WHERE id IS NOT NULL''')
-            all_tasks = cur.fetchall()
-            if all_tasks:
-                return jsonify(all_tasks)
-        except Exception as e:
-            return {'error': str(e)}
-
-    def post(self):
-        print("Adding new task")
 
 
 class TaskDetail(Resource):
@@ -155,7 +150,7 @@ class TaskDetail(Resource):
 api.add_resource(Hello, '/home')
 api.add_resource(Square, '/square/<int:num>')
 api.add_resource(Login, '/login')
-api.add_resource(CreateTask, '/createtask')
+# api.add_resource(CreateTask, '/createtask')
 api.add_resource(AllTasks, '/alltasks')
 api.add_resource(TaskDetail, '/task')
 
