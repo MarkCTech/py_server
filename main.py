@@ -136,11 +136,11 @@ class AllTasks(Resource):
 
 class TaskDetail(Resource):
 
-    def get(self, user_id):
+    def get(self, task_id):
         print("Getting details for Task by ID")
         try:
             cur = mysql.connection.cursor()
-            cur.execute('''SELECT * FROM tasklist WHERE id IS NOT NULL AND id = %s''', str(user_id))
+            cur.execute('''SELECT * FROM tasklist WHERE id IS NOT NULL AND id = %s''', str(task_id))
             all_tasks = cur.fetchall()
 
             if all_tasks:
@@ -149,7 +149,7 @@ class TaskDetail(Resource):
             print(str(e))
             return {'error': "Could not get Task by ID"}
 
-    def put(self, user_id):
+    def put(self, task_id):
         print("Updating details for Task")
         try:
 
@@ -168,7 +168,7 @@ class TaskDetail(Resource):
 
             cur = mysql.connection.cursor()
             update_user_cmd = '''UPDATE tasklist SET title=%s, completed=%s WHERE id=%s'''
-            cur.execute(update_user_cmd, (_taskTitle, _taskStatus, str(user_id)))
+            cur.execute(update_user_cmd, (_taskTitle, _taskStatus, str(task_id)))
 
             # Save sql work, close and load /alltasks
             mysql.connection.commit()
@@ -179,13 +179,28 @@ class TaskDetail(Resource):
             print(str(e))
         return {'error': "Could not update Task details"}
 
+    def delete(self, task_id):
+        print("Attempting to delete Task by ID")
+        try:
+            cur = mysql.connection.cursor()
+            cur.execute('''DELETE FROM tasklist WHERE id=%s''', str(task_id))
+
+            # Save sql work, close and load /alltasks
+            mysql.connection.commit()
+            cur.close()
+            return redirect(url_for('alltasks'))
+
+        except Exception as e:
+            print(str(e))
+            return {'error': "Could not update Task details"}
+
 
 # URL route handlers
 api.add_resource(Hello, '/home')
 api.add_resource(Square, '/square/<int:num>')
 api.add_resource(Login, '/login')
 api.add_resource(AllTasks, '/alltasks')
-api.add_resource(TaskDetail, '/task/<int:user_id>')
+api.add_resource(TaskDetail, '/task/<int:task_id>')
 
 
 def main():
