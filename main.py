@@ -84,7 +84,8 @@ class Login(Resource):
             return {'Username': args['username'], 'Password': args['password']}
 
         except Exception as e:
-            return {'error': str(e)}
+            print(str(e))
+            return {'error': "Could not log in"}
 
 
 class AllTasks(Resource):
@@ -98,7 +99,8 @@ class AllTasks(Resource):
             if all_tasks:
                 return jsonify(all_tasks)
         except Exception as e:
-            return {'error': str(e)}
+            print(str(e))
+            return {'error': "Could not get all Tasks"}
 
     def post(self):
         # Parse request for json, to create a task
@@ -120,39 +122,70 @@ class AllTasks(Resource):
             cur = mysql.connection.cursor()
             cur.execute('''INSERT INTO tasklist (title, completed) VALUES (%s, %s)''',
                         (_taskTitle, str(_taskStatus)))
+
+            # Save sql work, close and load /alltasks
             mysql.connection.commit()
             cur.close()
             return redirect(url_for('alltasks'))
             # return {'Title': args['title'], 'Status': args['status']}
 
         except Exception as e:
-            return {'error': str(e)}
+            print(str(e))
+            return {'error': "Could not post Task"}
 
 
 class TaskDetail(Resource):
 
-    def get(self):
-        print("Getting details for single Task")
+    def get(self, user_id):
+        print("Getting details for Task by ID")
+        try:
+            cur = mysql.connection.cursor()
+            cur.execute('''SELECT * FROM tasklist WHERE id IS NOT NULL AND id = %s''', str(user_id))
+            all_tasks = cur.fetchall()
 
-    def post(self):
+            if all_tasks:
+                return jsonify(all_tasks)
+        except Exception as e:
+            print(str(e))
+            return {'error': "Could not get Task by ID"}
+
+    def put(self, user_id):
         print("Updating details for Task")
+        try:
 
+            parser = reqparse.RequestParser()
+            parser.add_argument('title', type=str, help='Title of Task to update')
+            parser.add_argument('status', type=str, help='Completed status of Task')
+            args = parser.parse_args()
 
-# def execute_sql(cur, sql):
-#     try:
-#         cur.execute(sql)
-#     except:
-#         print(f"Error: '{err}'")
-#         return 0
+            _taskTitle = args['title']
+            _taskStatus = args['status']
+
+            if _taskStatus:
+                _taskStatus = str(1)
+            else:
+                _taskStatus = str(0)
+
+            cur = mysql.connection.cursor()
+            update_user_cmd = '''UPDATE tasklist SET title=%s, completed=%s WHERE id=%s'''
+            cur.execute(update_user_cmd, (_taskTitle, _taskStatus, str(user_id)))
+
+            # Save sql work, close and load /alltasks
+            mysql.connection.commit()
+            cur.close()
+            return redirect(url_for('alltasks'))
+
+        except Exception as e:
+            print(str(e))
+        return {'error': "Could not update Task details"}
 
 
 # URL route handlers
 api.add_resource(Hello, '/home')
 api.add_resource(Square, '/square/<int:num>')
 api.add_resource(Login, '/login')
-# api.add_resource(CreateTask, '/createtask')
 api.add_resource(AllTasks, '/alltasks')
-api.add_resource(TaskDetail, '/task')
+api.add_resource(TaskDetail, '/task/<int:user_id>')
 
 
 def main():
