@@ -1,14 +1,10 @@
-import MySQLdb
-from MySQLdb import Error
 import MySQLdb.cursors
-
 from flask import Flask, jsonify, request, redirect, url_for
 from flask_mysqldb import MySQL
 from flask_restful import Resource, Api, reqparse
-import pandas as pd
 
 # creating a Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder='./react/task_app/build', static_url_path='/')
 # creating an API object
 api = Api(app)
 
@@ -195,7 +191,13 @@ class TaskDetail(Resource):
             return {'error': "Could not update Task details"}
 
 
+class StaticServe(Resource):
+    def get(self):
+        return app.send_static_file('index.html')
+
+
 # URL route handlers
+api.add_resource(StaticServe, '/')
 api.add_resource(Hello, '/home')
 api.add_resource(Square, '/square/<int:num>')
 api.add_resource(Login, '/login')
