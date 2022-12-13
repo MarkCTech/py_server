@@ -3,50 +3,6 @@ from flask import Flask, jsonify, request, redirect, url_for
 from flask_mysqldb import MySQL
 from flask_restful import Resource, Api, reqparse
 
-# creating a Flask app
-app = Flask(__name__, static_folder='./react/task_app/build', static_url_path='/')
-# creating an API object
-api = Api(app)
-
-# config Database login details, and create MySql object
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_DB'] = 'py_tasks'
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-mysql = MySQL(app)
-
-
-def init_db():
-    # sql conn with no named database, to allow creating of named database before route setting
-    connection = None
-    cursor = None
-    try:
-        connection = MySQLdb.connect(host="localhost",  # your host, usually localhost
-                                     user="root",  # your username
-                                     passwd="",  # your password
-                                     db="")
-        cursor = connection.cursor()
-        try:
-            cursor.execute('CREATE DATABASE IF NOT EXISTS py_tasks')
-            cursor.execute('USE py_tasks')
-            cursor.execute('DROP TABLE IF EXISTS tasklist')
-            cursor.execute('''CREATE TABLE tasklist (
-                        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        title VARCHAR(100) NOT NULL,
-                        completed BOOLEAN NOT NULL DEFAULT 0)''')
-            cursor.execute('''INSERT INTO tasklist (title) VALUES ('Test')''')
-            connection.commit()
-            cursor.close()
-
-        except MySQLdb.Error as err:
-            print(f"Error: '{err}'")
-
-    except MySQLdb.Error as err:
-        print(f"Error: '{err}'")
-    finally:
-        connection.close()
-
 
 # returns hello world when we use GET.
 # returns the data that we send when we use POST.
@@ -198,19 +154,79 @@ class StaticServe(Resource):
         return app.send_static_file('index.html')
 
 
-# URL route handlers
-api.add_resource(StaticServe, '/')
-api.add_resource(Hello, '/home')
-api.add_resource(Square, '/square/<int:num>')
-api.add_resource(Login, '/login')
-api.add_resource(AllTasks, '/alltasks')
-api.add_resource(TaskDetail, '/task/<int:task_id>')
+def init_mysql_api_app():
+    # sql conn with no named database, to allow creating of named database before route setting
+    connection = None
+    cursor = None
+    print("\nInitializing database...")
+    password = input("Root Password: ")
+    try:
+        connection = MySQLdb.connect(host="localhost",  # your host, usually localhost
+                                     user="root",  # your username
+                                     passwd=password,  # your password
+                                     db="")
+        cursor = connection.cursor()
+        try:
+            cursor.execute('CREATE DATABASE IF NOT EXISTS py_tasks')
+            cursor.execute('USE py_tasks')
+            cursor.execute('DROP TABLE IF EXISTS tasklist')
+            cursor.execute('''CREATE TABLE tasklist (                                          
+                        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,                            
+                        title VARCHAR(100) NOT NULL,                                           
+                        completed BOOLEAN NOT NULL DEFAULT 0)''')
+            cursor.execute('''INSERT INTO tasklist (title) VALUES ('Test')''')
+            connection.commit()
+            cursor.close()
+
+        except MySQLdb.Error as err:
+            print(f"Error: '{err}'")
+
+    except MySQLdb.Error as err:
+        print(f"Error: '{err}'")
+    finally:
+        # Close root connection
+        connection.close()
+        print("Created workspace with py_tasks database")
+
+        # creating a Flask app
+        global app
+        app = Flask(__name__, static_folder='./react/task_app/build', static_url_path='/')
+
+        # creating an API object
+        global api
+        api = Api(app)
+
+        # config Flasks Database login details
+        print("\nLogin to database as a user:")
+        database = "py_tasks"
+        username = input("Username: ")
+        password = input("Password: ")
+        app.config['MYSQL_USER'] = username
+        app.config['MYSQL_PASSWORD'] = password
+        app.config['MYSQL_HOST'] = 'localhost'
+        app.config['MYSQL_DB'] = database
+        app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+
+        # create MySql object
+        global mysql
+        mysql = MySQL(app)
+
+        # URL route handlers
+        api.add_resource(StaticServe, '/')
+        api.add_resource(Hello, '/home')
+        api.add_resource(Square, '/square/<int:num>')
+        api.add_resource(Login, '/login')
+        api.add_resource(AllTasks, '/alltasks')
+        api.add_resource(TaskDetail, '/task/<int:task_id>')
 
 
 def main():
-    init_db()
-    app.run(host="localhost", port=int("5000"), debug=True)
+
+    init_mysql_api_app()
+    # Run flask                                                
+    app.run(host="localhost", port=int("5000"), debug=True, use_reloader=False)
 
 
 if __name__ == '__main__':
     main()
+    
