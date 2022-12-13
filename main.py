@@ -10,40 +10,42 @@ api = Api(app)
 
 # config Database login details, and create MySql object
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'toor'
+app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_DB'] = 'py_tasks'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
 
-# sql conn with no named database, to allow creating of named database before route setting
-connection = None
-cursor = None
-try:
-    connection = MySQLdb.connect(host="localhost",  # your host, usually localhost
-                                 user="root",  # your username
-                                 passwd="toor",  # your password
-                                 db="")
-    cursor = connection.cursor()
+
+def init_db():
+    # sql conn with no named database, to allow creating of named database before route setting
+    connection = None
+    cursor = None
     try:
-        cursor.execute('CREATE DATABASE IF NOT EXISTS py_tasks')
-        cursor.execute('USE py_tasks')
-        cursor.execute('DROP TABLE IF EXISTS tasklist')
-        cursor.execute('''CREATE TABLE tasklist (
-                    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                    title VARCHAR(100) NOT NULL,
-                    completed BOOLEAN NOT NULL DEFAULT 0)''')
-        cursor.execute('''INSERT INTO tasklist (title) VALUES ('Test')''')
-        connection.commit()
-        cursor.close()
+        connection = MySQLdb.connect(host="localhost",  # your host, usually localhost
+                                     user="root",  # your username
+                                     passwd="",  # your password
+                                     db="")
+        cursor = connection.cursor()
+        try:
+            cursor.execute('CREATE DATABASE IF NOT EXISTS py_tasks')
+            cursor.execute('USE py_tasks')
+            cursor.execute('DROP TABLE IF EXISTS tasklist')
+            cursor.execute('''CREATE TABLE tasklist (
+                        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        title VARCHAR(100) NOT NULL,
+                        completed BOOLEAN NOT NULL DEFAULT 0)''')
+            cursor.execute('''INSERT INTO tasklist (title) VALUES ('Test')''')
+            connection.commit()
+            cursor.close()
+
+        except MySQLdb.Error as err:
+            print(f"Error: '{err}'")
 
     except MySQLdb.Error as err:
         print(f"Error: '{err}'")
-
-except MySQLdb.Error as err:
-    print(f"Error: '{err}'")
-finally:
-    connection.close()
+    finally:
+        connection.close()
 
 
 # returns hello world when we use GET.
@@ -206,6 +208,7 @@ api.add_resource(TaskDetail, '/task/<int:task_id>')
 
 
 def main():
+    init_db()
     app.run(host="localhost", port=int("5000"), debug=True)
 
 
