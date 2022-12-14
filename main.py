@@ -1,3 +1,5 @@
+import re
+
 import MySQLdb.cursors
 from flask import Flask, jsonify, request, redirect, url_for
 from flask_mysqldb import MySQL
@@ -173,14 +175,25 @@ def init_mysql_api_app():
                                      db="")
         cursor = connection.cursor()
         try:
+            # Create database
             cursor.execute('CREATE DATABASE IF NOT EXISTS py_tasks')
             cursor.execute('USE py_tasks')
+
+            # Create tasklist table, populate with a test entry
             cursor.execute('DROP TABLE IF EXISTS tasklist')
             cursor.execute('''CREATE TABLE tasklist (                                          
                         id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,                            
                         title VARCHAR(100) NOT NULL,                                           
                         completed BOOLEAN NOT NULL DEFAULT 0)''')
             cursor.execute('''INSERT INTO tasklist (title) VALUES ('Test')''')
+
+            # Create accounts table, populate with a test entry
+            cursor.execute('''CREATE TABLE IF NOT EXISTS accounts (
+                        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        username VARCHAR(100) NOT NULL,
+                        password VARCHAR(100) NOT NULL)''')
+            cursor.execute('''INSERT INTO accounts (username, password) VALUES ('test', 'test')''')
+
             connection.commit()
             cursor.close()
 
@@ -206,6 +219,7 @@ def init_mysql_api_app():
         api.add_resource(StaticServe, '/')
         api.add_resource(Hello, '/home')
         api.add_resource(Square, '/square/<int:num>')
+        api.add_resource(Register, '/register')
         api.add_resource(Login, '/login')
         api.add_resource(AllTasks, '/alltasks')
         api.add_resource(TaskDetail, '/task/<int:task_id>')
@@ -228,6 +242,57 @@ def mysql_login():
     # create MySql object
     global mysql
     mysql = MySQL(app)
+
+#
+# def post(self):
+#     try:
+#         # Parse the arguments
+#         parser = reqparse.RequestParser()
+#         parser.add_argument('username', type=str, help='Sql Username')
+#         parser.add_argument('password', type=str, help='Sql Password')
+#         args = parser.parse_args()
+#
+#         _userUser = args['username']
+#         _userPassword = args['password']
+#
+#         return {'Username': args['username'], 'Password': args['password']}
+#
+#     except Exception as e:
+#         print(str(e))
+#         return {'error': "Could not log in"}
+
+
+class Register(Resource):
+    def post(self):
+        msg = ''
+
+        # Parse the arguments
+        parser = reqparse.RequestParser()
+        parser.add_argument('username', type=str, help='Registration Username')
+        parser.add_argument('password', type=str, help='Registration Password')
+        args = parser.parse_args()
+
+        _userUser = args['username']
+        _userPassword = args['password']
+
+        if _userUser and _userPassword:
+
+            cursor = mysql.connection.cursor()
+            cursor.execute('''SELECT * FROM accounts WHERE username = (%s) ''', (_userUser, ))
+            account = cursor.fetchone()
+            if account:
+                msg = 'Account already exists !'
+            elif not re.match(r'[A-Za-z0-9]+', _userUser):
+                msg = 'Username must contain only characters and numbers !'
+            elif not _userUser or not _userPassword:
+                msg = 'Please fill out the form !'
+            else:
+                cursor.execute('INSERT INTO accounts VALUES (NULL, %s, %s)', (_userUser, _userPassword))
+                mysql.connection.commit()
+                msg = 'You have successfully registered !'
+        elif request.method == 'POST':
+            msg = 'Please fill out the form !'
+        return {'msg': msg}
 
 
 def main():
