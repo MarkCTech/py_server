@@ -104,6 +104,9 @@ class Login(Resource):
                 print(msg)
                 return redirect(url_for('alltasks'))
 
+            msg = 'Username/Password Invalid'
+            return {'msg': msg}
+
         except Exception as e:
             print(str(e))
             return {'error': "Login Error"}
@@ -293,6 +296,7 @@ def mysql_login():
     database = "py_tasks"
     username = input("Username: ")
     password = input("Password: ")
+    app.secret_key = 'your secret key'
     app.config['MYSQL_USER'] = username
     app.config['MYSQL_PASSWORD'] = password
     app.config['MYSQL_HOST'] = 'localhost'
