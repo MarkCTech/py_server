@@ -4,6 +4,12 @@ from flask_mysqldb import MySQL
 from flask_restful import Resource, Api, reqparse
 
 
+# Defining globals
+global app
+global api
+global mysql
+
+
 # returns hello world when we use GET.
 # returns the data that we send when we use POST.
 class Hello(Resource):
@@ -196,21 +202,6 @@ def init_mysql_api_app():
         global api
         api = Api(app)
 
-        # config Flasks Database login details
-        print("\nLogin to database as a user:")
-        database = "py_tasks"
-        username = input("Username: ")
-        password = input("Password: ")
-        app.config['MYSQL_USER'] = username
-        app.config['MYSQL_PASSWORD'] = password
-        app.config['MYSQL_HOST'] = 'localhost'
-        app.config['MYSQL_DB'] = database
-        app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-
-        # create MySql object
-        global mysql
-        mysql = MySQL(app)
-
         # URL route handlers
         api.add_resource(StaticServe, '/')
         api.add_resource(Hello, '/home')
@@ -218,6 +209,25 @@ def init_mysql_api_app():
         api.add_resource(Login, '/login')
         api.add_resource(AllTasks, '/alltasks')
         api.add_resource(TaskDetail, '/task/<int:task_id>')
+
+        mysql_login()
+
+
+def mysql_login():
+    # config Flasks Database login details
+    print("\nLogin to database as a user:")
+    database = "py_tasks"
+    username = input("Username: ")
+    password = input("Password: ")
+    app.config['MYSQL_USER'] = username
+    app.config['MYSQL_PASSWORD'] = password
+    app.config['MYSQL_HOST'] = 'localhost'
+    app.config['MYSQL_DB'] = database
+    app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+
+    # create MySql object
+    global mysql
+    mysql = MySQL(app)
 
 
 def main():
