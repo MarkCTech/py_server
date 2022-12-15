@@ -4,6 +4,7 @@ import MySQLdb.cursors
 from flask import Flask, jsonify, request, redirect, url_for, session
 from flask_mysqldb import MySQL
 from flask_restful import Resource, Api, reqparse
+from flask_cors import CORS
 
 
 # Defining globals
@@ -73,8 +74,8 @@ class Register(Resource):
 
 
 class Login(Resource):
-    def get(self):
-        return jsonify({'message': 'Login Page'})
+    # def get(self):
+    #     return jsonify({'message': 'Login Page'})
 
     def post(self):
         msg = ''
@@ -273,6 +274,7 @@ def init_mysql_api_app():
         # creating a Flask app
         global app
         app = Flask(__name__, static_folder='./react/task_app/build', static_url_path='/')
+        CORS(app)
 
         # creating an API object
         global api
