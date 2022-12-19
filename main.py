@@ -50,10 +50,11 @@ class Register(Resource):
 
         if not _userUser or not _userPassword:
             msg = 'Please fill out the form !'
-            return {'msg': msg}
+            return {'msg': msg}, 403
+
         elif not re.match(r'[A-Za-z0-9]+', _userUser):
             msg = 'Username must contain only characters and numbers !'
-            return {'msg': msg}
+            return {'msg': msg}, 403
 
         try:
             cursor = mysql.connection.cursor()
@@ -61,17 +62,18 @@ class Register(Resource):
             account = cursor.fetchone()
             if account:
                 msg = 'Account already exists !'
-                return {'msg': msg}
+                return {'msg': msg}, 405
 
             cursor.execute('INSERT INTO accounts (username, password) VALUES (%s, %s)', (_userUser, _userPassword))
             mysql.connection.commit()
             msg = 'You have successfully registered!'
             print(msg)
-            return {'msg': msg}
+            return {'msg': msg}, 201
 
         except Exception as e:
             print(str(e))
-            return {'error': "Registration Error"}
+            msg = "Registration Error"
+            return {'msg': msg}, 400
 
 
 class Login(Resource):
@@ -91,7 +93,7 @@ class Login(Resource):
 
         if not _userUser or not _userPassword:
             msg = 'Please fill out the form !'
-            return {'msg': msg}
+            return {'msg': msg}, 403
 
         try:
             cursor = mysql.connection.cursor()
@@ -103,14 +105,14 @@ class Login(Resource):
                 session['id'] = account['id']
                 session['username'] = account['username']
                 msg = 'Logged in successfully !'
-                return {'msg': msg}
+                return {'msg': msg}, 201
 
             msg = 'Username/Password Invalid'
-            return {'msg': msg}
+            return {'msg': msg}, 403
 
         except Exception as e:
             print(str(e))
-            return {'msg': "Login Error"}
+            return {'msg': "Login Error"}, 400
 
 
 class AllTasks(Resource):
@@ -125,7 +127,7 @@ class AllTasks(Resource):
                 return jsonify(all_tasks)
         except Exception as e:
             print(str(e))
-            return {'error': "Could not get all Tasks"}
+            return {'error': "Could not get all Tasks"}, 400
 
     def post(self):
         # Parse request for json, to create a task
@@ -156,7 +158,7 @@ class AllTasks(Resource):
 
         except Exception as e:
             print(str(e))
-            return {'error': "Could not post Task"}
+            return {'error': "Could not post Task"}, 400
 
 
 class TaskDetail(Resource):
@@ -172,7 +174,7 @@ class TaskDetail(Resource):
                 return jsonify(all_tasks)
         except Exception as e:
             print(str(e))
-            return {'error': "Could not get Task by ID"}
+            return {'error': "Could not get Task by ID"}, 400
 
     def put(self, task_id):
         print("Updating details for Task")
@@ -202,7 +204,7 @@ class TaskDetail(Resource):
 
         except Exception as e:
             print(str(e))
-        return {'error': "Could not update Task details"}
+        return {'error': "Could not update Task details"}, 400
 
     def delete(self, task_id):
         print("Attempting to delete Task by ID")
@@ -217,7 +219,7 @@ class TaskDetail(Resource):
 
         except Exception as e:
             print(str(e))
-            return {'error': "Could not update Task details"}
+            return {'error': "Could not update Task details"}, 400
 
 
 class StaticServe(Resource):
