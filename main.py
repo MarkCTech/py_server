@@ -33,8 +33,8 @@ class Square(Resource):
 
 
 class Register(Resource):
-    def get(self):
-        return jsonify({'message': 'Registration Page'})
+    # def get(self):
+    #     return jsonify({'message': 'Registration Page'})
 
     def post(self):
         msg = ''
@@ -62,12 +62,13 @@ class Register(Resource):
             if account:
                 msg = 'Account already exists !'
                 return {'msg': msg}
-            else:
-                cursor.execute('INSERT INTO accounts (username, password) VALUES (%s, %s)', (_userUser, _userPassword))
-                mysql.connection.commit()
-                msg = 'You have successfully registered!'
-                print(msg)
-                return redirect(url_for('login'))
+
+            cursor.execute('INSERT INTO accounts (username, password) VALUES (%s, %s)', (_userUser, _userPassword))
+            mysql.connection.commit()
+            msg = 'You have successfully registered!'
+            print(msg)
+            return {'msg': msg}
+
         except Exception as e:
             print(str(e))
             return {'error': "Registration Error"}
@@ -102,15 +103,14 @@ class Login(Resource):
                 session['id'] = account['id']
                 session['username'] = account['username']
                 msg = 'Logged in successfully !'
-                print(msg)
-                return redirect(url_for('alltasks'))
+                return {'msg': msg}
 
             msg = 'Username/Password Invalid'
             return {'msg': msg}
 
         except Exception as e:
             print(str(e))
-            return {'error': "Login Error"}
+            return {'msg': "Login Error"}
 
 
 class AllTasks(Resource):
